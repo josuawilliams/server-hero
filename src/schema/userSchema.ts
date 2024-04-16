@@ -5,6 +5,7 @@ export interface userTypeModel extends userType, Document {}
 
 const UserSchema = new mongoose.Schema({
   email: { type: String, required: true },
+  name: { type: String, required: true },
   password: {
     type: String,
     required: true,
@@ -16,4 +17,4 @@ const UserSchema = new mongoose.Schema({
   }
 })
 
-export const AdminModel = mongoose.model<userTypeModel>('user', UserSchema)
+export const UserModel = mongoose.model<userTypeModel>('user', UserSchema)
