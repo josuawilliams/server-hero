@@ -1,15 +1,9 @@
-import JWT from 'jsonwebtoken'
-// exports.adminRefreshToken = (admin) => {
-//   const refreshToken = JWT.sign({ _id: admin._id }, process.env.SECRET_KEY_REFRESH, {
-//     algorithm: "HS256"
-//   });
+import JWT, { verify } from "jsonwebtoken";
 
-//   return refreshToken;
-// };
 interface userLoginType {
-  _id: string
-  email: string
-  name: string
+  _id: string;
+  email: string;
+  name: string;
 }
 
 const LoginToken = (user: userLoginType) => {
@@ -17,15 +11,19 @@ const LoginToken = (user: userLoginType) => {
     {
       _id: user._id,
       email: user.email,
-      name: user.name
+      name: user.name,
     },
     process.env.SECRET_KEY,
     {
-      algorithm: 'HS256',
-      expiresIn: '3h'
+      algorithm: "HS256",
+      expiresIn: "3h",
     }
-  )
-  return token
-}
+  );
+  return token;
+};
 
-export { LoginToken }
+const VerifyToken = (token: string) => {
+  return verify(token, process.env.SECRET_KEY);
+};
+
+export { LoginToken, VerifyToken };
