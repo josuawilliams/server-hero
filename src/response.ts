@@ -1,4 +1,4 @@
-import { FavouritesType } from "./interface/favourites/favourites";
+import { Favourites, FavouritesType } from "./interface/favourites/favourites";
 import { heroesType } from "./interface/heroes/heroes";
 
 interface ResponseDataList<T> {
@@ -31,6 +31,14 @@ const successListFavourite = async (
   return res.status(code).json(data);
 };
 
+const successListNewFavourite = async (
+  data: ResponseData<Favourites>,
+  res: any,
+  code: number
+) => {
+  return res.status(code).json(data);
+};
+
 const successWithResponse = async (data: any, res: any, code: number) => {
   return res.status(code).json(data);
 };
@@ -41,4 +49,5 @@ export = {
   successList,
   successWithResponse,
   successListFavourite,
+  successListNewFavourite,
 };

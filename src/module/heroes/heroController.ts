@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import response from "../../response";
-import { comparePass, hashPassword } from "../../helper/hashPassword";
 import { HeroModel } from "../../schema/heroesSchema";
 import { FavouritesModel } from "../../schema/favouritesSchema";
 import mongoose from "mongoose";
@@ -178,12 +177,27 @@ export async function getFavouritesHero(
     ]);
     if (!favouritesHero) {
       const isEmptyFavourite = await FavouritesModel.findOne({ userId });
-      //Sampai Sini , jika blum ada favorit hero dan user belum terdaftar di Favorite
+      if (!isEmptyFavourite) {
+        const saveNewFavourite = new FavouritesModel({
+          userId: new mongoose.Types.ObjectId(userId as string),
+          heroId: [],
+        });
+        await saveNewFavourite.save();
+        return response.successListNewFavourite(
+          { data: saveNewFavourite },
+          res,
+          200
+        );
+      } else {
+        return response.successListNewFavourite(
+          { data: isEmptyFavourite },
+          res,
+          200
+        );
+      }
     }
     return response.successListFavourite({ data: favouritesHero }, res, 200);
   } catch (error) {
-    console.log(error);
-
     return response.error(error, res, 500);
   }
 }
@@ -194,7 +208,93 @@ export async function DeleteFavourite(
   next: NextFunction
 ) {
   try {
-    
+    const userId = req.user._id;
+    const heroId = req.params.heroId;
+
+    const result = await FavouritesModel.updateOne(
+      { userId },
+      { $pull: { heroId: new mongoose.Types.ObjectId(heroId as string) } }
+    );
+    if (result.modifiedCount === 1) {
+      return response.success("Berhasil Dihapus", res, 200);
+    } else {
+      return response.error("Invalid Delete/ Hero Tidak Ada", res, 200);
+    }
+  } catch (error) {
+    return response.error(error, res, 500);
+  }
+}
+
+export async function DeleteHero(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const heroId = req.params.heroId;
+
+    await HeroModel.deleteOne({
+      _id: new mongoose.Types.ObjectId(heroId as string),
+    });
+    await FavouritesModel.updateMany(
+      {},
+      { $pull: { heroId: new mongoose.Types.ObjectId(heroId) } }
+    );
+    return response.success("Berhasil Dihapus", res, 200);
+  } catch (error) {
+    return response.error(error, res, 500);
+  }
+}
+
+export async function getById(req: Request, res: Response, next: NextFunction) {
+  try {
+    const heroId = req.params.Id;
+    const data = await HeroModel.findOne({ _id: heroId });
+    if (!data) {
+      return response.error("Hero Tidak Terdaftar", res, 500);
+    }
+    return res.status(200).json({ data: data });
+  } catch (error) {
+    return response.error(error, res, 500);
+  }
+}
+
+export async function updateHero(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const heroId = req.params.Id;
+    const { name, type, imageUrl } = req.body;
+    if (!name) {
+      return response.error("Nama Hero Harus Ada", res, 400);
+    }
+    if (!type) {
+      return response.error("Tipe Hero Harus Ada", res, 500);
+    }
+    if (!imageUrl) {
+      return response.error(
+        "Gambar Hero Harus Diisi Dalam Bentuk String",
+        res,
+        500
+      );
+    }
+    const updateData = {
+      name: name,
+      type: type,
+      imageUrl: imageUrl,
+    };
+    const result = await HeroModel.updateOne(
+      { _id: heroId },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount > 0) {
+      return response.success("Data Hero Berhasil Diubah", res, 200);
+    } else {
+      return response.error("Hero Tidak Terdaftar", res, 500);
+    }
   } catch (error) {
     return response.error(error, res, 500);
   }
